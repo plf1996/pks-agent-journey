@@ -299,6 +299,11 @@ class KanbanService:
         if not target_column:
             raise ValueError("目标列不存在")
 
+        # 获取目标列的下一个位置（初始）
+        max_position = db.query(func.max(KanbanCard.position)).filter(
+            KanbanCard.column_id == target_column_id
+        ).scalar() or -1
+
         moved_count = 0
 
         for card_id in card_ids:
@@ -310,10 +315,8 @@ class KanbanService:
             if not card:
                 continue
 
-            # 获取目标列的下一个位置
-            max_position = db.query(func.max(KanbanCard.position)).filter(
-                KanbanCard.column_id == target_column_id
-            ).scalar() or -1
+            # 递增位置
+            max_position += 1
 
             # 检查卡片是否已在看板中
             existing = db.query(KanbanCard).filter(
@@ -323,13 +326,13 @@ class KanbanService:
             if existing:
                 # 更新到新列
                 existing.column_id = target_column_id
-                existing.position = max_position + 1
+                existing.position = max_position
             else:
                 # 创建新关联
                 kanban_card = KanbanCard(
                     card_id=card_id,
                     column_id=target_column_id,
-                    position=max_position + 1
+                    position=max_position
                 )
                 db.add(kanban_card)
 

@@ -2,7 +2,8 @@
 卡片链接相关API路由
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.api.deps import get_current_user
@@ -12,14 +13,20 @@ from app.schemas.card import CardLinkInfo
 from app.schemas.common import ApiResponse
 from app.services.card_service import CardService
 
+
+class CardLinkCreate(BaseModel):
+    """创建卡片链接请求"""
+    target_card_id: int = Field(..., description="目标卡片ID")
+    link_type: LinkType = Field(default=LinkType.REFERENCE, description="链接类型")
+
+
 router = APIRouter()
 
 
 @router.post("/{card_id}/links", response_model=ApiResponse, status_code=status.HTTP_201_CREATED)
 def create_card_link(
     card_id: int,
-    target_card_id: int,
-    link_type: LinkType = LinkType.REFERENCE,
+    link_in: CardLinkCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -36,8 +43,8 @@ def create_card_link(
         link_info = CardService.create_card_link(
             db,
             source_card,
-            target_card_id,
-            link_type
+            link_in.target_card_id,
+            link_in.link_type
         )
         return ApiResponse(
             code=0,

@@ -56,7 +56,13 @@ def get_tags(
         children_count = len(tag.children)
         cards_count = len(tag.card_tags)
         result.append({
-            **tag.model_dump(),
+            "id": tag.id,
+            "name": tag.name,
+            "color": tag.color,
+            "parent_id": tag.parent_id,
+            "user_id": tag.user_id,
+            "created_at": tag.created_at,
+            "updated_at": tag.updated_at,
             "children_count": children_count,
             "cards_count": cards_count
         })

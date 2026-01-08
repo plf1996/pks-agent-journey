@@ -24,13 +24,19 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 
 # 安装 Python 依赖
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制应用代码
 COPY . .
 
-# 创建数据目录
-RUN mkdir -p /app/data
+# 创建数据目录和 alembic versions 目录
+RUN mkdir -p /app/data /app/alembic/versions
+
+# 复制并设置启动脚本
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # 暴露端口
 EXPOSE 8000
@@ -39,5 +45,8 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"
 
-# 启动命令
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 使用启动脚本
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# 默认启动命令（开发模式）
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

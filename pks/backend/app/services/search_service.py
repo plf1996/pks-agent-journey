@@ -18,7 +18,7 @@ class SearchService:
         keyword: str,
         skip: int = 0,
         limit: int = 20
-    ) -> tuple[List[Card], int]:
+    ) -> tuple[List[Dict], int]:
         """
         搜索卡片
 
@@ -30,7 +30,7 @@ class SearchService:
             limit: 返回记录数
 
         Returns:
-            tuple[List[Card], int]: 卡片列表和总数
+            tuple[List[Dict], int]: 卡片列表和总数
         """
         search_pattern = f"%{keyword}%"
 
@@ -51,14 +51,29 @@ class SearchService:
         # 分页
         cards = query.offset(skip).limit(limit).all()
 
-        return cards, total
+        # 转换为字典
+        items = []
+        for card in cards:
+            items.append({
+                "id": card.id,
+                "title": card.title,
+                "content": card.content,
+                "card_type": card.card_type,
+                "url": card.url,
+                "is_pinned": card.is_pinned,
+                "view_count": card.view_count,
+                "created_at": card.created_at,
+                "updated_at": card.updated_at
+            })
+
+        return items, total
 
     @staticmethod
     def search_tags(
         db: Session,
         user_id: int,
         keyword: str
-    ) -> List[Tag]:
+    ) -> List[Dict]:
         """
         搜索标签
 
@@ -68,7 +83,7 @@ class SearchService:
             keyword: 搜索关键词
 
         Returns:
-            List[Tag]: 标签列表
+            List[Dict]: 标签列表
         """
         search_pattern = f"%{keyword}%"
 
@@ -79,7 +94,17 @@ class SearchService:
             )
         ).all()
 
-        return tags
+        # 转换为字典
+        items = []
+        for tag in tags:
+            items.append({
+                "id": tag.id,
+                "name": tag.name,
+                "color": tag.color,
+                "parent_id": tag.parent_id
+            })
+
+        return items
 
     @staticmethod
     def global_search(

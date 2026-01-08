@@ -34,10 +34,35 @@ def create_card(
     """创建卡片"""
     try:
         card = CardService.create_card(db, current_user.id, card_in)
+
+        # 构建标签数据
+        tags_data = []
+        for ct in card.tags:
+            tags_data.append({
+                "id": ct.tag.id,
+                "name": ct.tag.name,
+                "color": ct.tag.color
+            })
+
+        # 构建响应数据
+        card_data = {
+            "id": card.id,
+            "title": card.title,
+            "content": card.content,
+            "card_type": card.card_type,
+            "url": card.url,
+            "user_id": card.user_id,
+            "is_pinned": card.is_pinned,
+            "view_count": card.view_count,
+            "created_at": card.created_at,
+            "updated_at": card.updated_at,
+            "tags": tags_data
+        }
+
         return ApiResponse(
             code=0,
             message="创建成功",
-            data=card
+            data=card_data
         )
     except ValueError as e:
         raise HTTPException(
@@ -180,10 +205,35 @@ def update_card(
 
     try:
         updated_card = CardService.update_card(db, card, card_in)
+
+        # 构建标签数据
+        tags_data = []
+        for ct in updated_card.tags:
+            tags_data.append({
+                "id": ct.tag.id,
+                "name": ct.tag.name,
+                "color": ct.tag.color
+            })
+
+        # 构建响应数据
+        card_data = {
+            "id": updated_card.id,
+            "title": updated_card.title,
+            "content": updated_card.content,
+            "card_type": updated_card.card_type,
+            "url": updated_card.url,
+            "user_id": updated_card.user_id,
+            "is_pinned": updated_card.is_pinned,
+            "view_count": updated_card.view_count,
+            "created_at": updated_card.created_at,
+            "updated_at": updated_card.updated_at,
+            "tags": tags_data
+        }
+
         return ApiResponse(
             code=0,
             message="更新成功",
-            data=updated_card
+            data=card_data
         )
     except ValueError as e:
         raise HTTPException(

@@ -4,7 +4,8 @@
 包含应用的所有配置项，使用环境变量进行配置
 """
 import os
-from typing import Optional
+import json
+from typing import Optional, Union
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -31,11 +32,13 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 120  # 2小时
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30  # 30天
 
-    # CORS配置
-    BACKEND_CORS_ORIGINS: list[str] = [
+    # CORS配置 - 支持JSON字符串或列表
+    BACKEND_CORS_ORIGINS: Union[str, list[str]] = [
         "http://localhost:5173",  # Vite默认端口
         "http://localhost:3000",  # React默认端口
         "http://localhost:8080",  # Vue CLI默认端口
+        "http://192.168.0.16:5173",  # 虚拟机访问
+        "http://192.168.0.16",  # 虚拟机访问
     ]
 
     # 分页配置
@@ -48,6 +51,16 @@ class Settings(BaseSettings):
 
     # 搜索配置
     SEARCH_RESULTS_LIMIT: int = 50
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """解析CORS配置，支持JSON字符串或列表"""
+        if isinstance(self.BACKEND_CORS_ORIGINS, str):
+            try:
+                return json.loads(self.BACKEND_CORS_ORIGINS)
+            except json.JSONDecodeError:
+                return [self.BACKEND_CORS_ORIGINS]
+        return self.BACKEND_CORS_ORIGINS
 
     class Config:
         """Pydantic配置"""

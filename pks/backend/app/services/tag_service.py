@@ -173,33 +173,30 @@ class TagService:
         # 获取子标签
         children = db.query(Tag).filter(Tag.parent_id == tag_id).all()
 
-        # 获取关联的卡片
-        card_tags = db.query(CardTag).filter(CardTag.tag_id == tag_id).all()
-        cards = []
-        for ct in card_tags:
-            card = db.query(Card).filter(Card.id == ct.card_id).first()
-            if card:
-                cards.append({
-                    "id": card.id,
-                    "title": card.title
-                })
+        # 获取关联的卡片数量
+        cards_count = len(tag.card_tags)
 
         return {
             "id": tag.id,
             "name": tag.name,
             "color": tag.color,
             "parent_id": tag.parent_id,
+            "user_id": tag.user_id,
+            "created_at": tag.created_at,
+            "updated_at": tag.updated_at,
             "children": [
                 {
                     "id": child.id,
                     "name": child.name,
                     "color": child.color,
-                    "parent_id": child.parent_id
+                    "parent_id": child.parent_id,
+                    "user_id": child.user_id,
+                    "created_at": child.created_at,
+                    "updated_at": child.updated_at
                 }
                 for child in children
             ],
-            "cards": cards,
-            "created_at": tag.created_at
+            "cards_count": cards_count
         }
 
     @staticmethod
