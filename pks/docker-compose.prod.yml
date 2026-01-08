@@ -1,0 +1,89 @@
+# ============================================
+# PKS 生产环境 Docker Compose 配置
+# 仅包含必要服务，数据库可外部托管
+# ============================================
+
+version: '3.8'
+
+services:
+  # ============================================
+  # PostgreSQL 数据库
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: pks-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pks_db}
+      POSTGRES_USER: ${POSTGRES_USER:-pks_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pks_user} -d ${POSTGRES_DB:-pks_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pks-network
+
+  # ============================================
+  # 后端服务
+  # ============================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pks-backend
+    restart: always
+    environment:
+      APP_NAME: PKS
+      APP_VERSION: 1.0.0
+      DEBUG: "False"
+      SECRET_KEY: ${SECRET_KEY}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pks_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-pks_db}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-'["https://your-domain.com"]'}
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+    volumes:
+      - backend_data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - pks-network
+
+  # ============================================
+  # 前端服务（Nginx）
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pks-frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # SSL 证书（如果使用 HTTPS）
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    networks:
+      - pks-network
+
+networks:
+  pks-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  backend_data:
