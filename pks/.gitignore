@@ -1,0 +1,35 @@
+# 环境变量文件
+.env
+
+# 数据库
+*.db
+*.db-shm
+*.db-wal
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Vue/Node
+node_modules/
+.vite/
+dist/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Alembic
+alembic/versions/*.py
+!alembic/versions/.gitkeep

@@ -51,7 +51,7 @@ services:
     container_name: pks-frontend-dev
     restart: unless-stopped
     environment:
-      VITE_API_BASE_URL: http://192.168.0.16:8000/api/v1
+      VITE_API_BASE_URL: ${API_URL:-http://localhost:8000/api/v1}
     volumes:
       # 挂载源代码，实现热重载
       - ./frontend:/app
